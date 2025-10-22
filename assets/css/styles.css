@@ -1,0 +1,101 @@
+.bg-light {
+    background-color: #E5E5E5 !important;
+}
+
+.hero-img {
+    max-height: 667px;
+    filter: brightness(55%);
+}
+
+.card-recipe .card-img-top {
+    height: 253px;
+    object-fit: cover;
+}
+
+.badge-time {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    border-radius: 999px;
+}
+
+.card-body .card-title {
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
+
+.card-body .card-recette {
+    padding-bottom: 10px;
+}
+
+.card-recipe {
+    border-radius: 21px;
+    overflow: hidden;
+    background-color: #fff;
+}
+
+.card-recipe .card-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    height: 520px;
+}
+
+.card-recipe .card-text {
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-recipe .row > .col-6 {
+    padding-right: 1rem;
+}
+
+.card-recipe .fw-semibold {
+    color: #000;
+}
+
+.card-recipe p.text-uppercase {
+    letter-spacing: 0.05rem;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.card-recipe .text-muted {
+    white-space: nowrap;
+}
+
+.card-recipe .ingredient-item {
+    padding-bottom: 10px;
+}
+
+.card-recipe .ingredient-name {
+    display: block;
+    font-weight: 600;
+    color: #212529;
+    line-height: 1.2;
+    padding-bottom: 5px;
+    padding-top: 12px;
+}
+
+.card-recipe .ingredient-quantity {
+    display: block;
+    color: #6c757d;
+    line-height: 1.2;
+}
+
+.card-recipe .text-muted {
+    white-space: normal;
+}
+
+.dropdown .btn {
+    background-color: white;
+    height: 56px;
+    width: 176px;
+    margin-left: 33px;
+    margin-right: 33px;
+    border-radius: 11px;
+}
