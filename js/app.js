@@ -5,6 +5,12 @@ console.log("[app] recipes importées :", Array.isArray(recipes), "longeur =", r
 
 let ALL_RECIPES = recipes;
 
+function normalize(str) {
+    return (str ?? "")
+        .toString()
+        .toLowerCase()
+}
+
 function formatQuantity(quantity, unit) {
     if (quantity == null && !unit) return '';
     const unitLabel = unit ? `${unit}` : '';
@@ -15,6 +21,37 @@ function uniqueSorted(array) {
     return [...new Set(array)].sort((a, b) => 
     a.localeCompare(b, 'fr', {sensitivity : 'base' }));
 }
+
+function searchArray(recipes, query) {
+    const q = normalize(query);
+    const hasQuery = q.length >= 3;
+    if (!hasQuery) return recipes;
+
+    return recipes.filter(recipe => normalize(recipe.name ?? "").includes(q));
+}
+
+function runSearch() {
+    const query = document.getElementById("mainSearch")?.value?.trim() ?? "";
+    const hasQuery = query.length >= 3;
+
+    const start = performance.now();
+    const results = hasQuery ? searchArray(ALL_RECIPES, query) : ALL_RECIPES;
+    const end = performance.now();
+
+    console.log(`[algo-array] ${results.length} résultats en ${(end - start).toFixed(2)} ms`);
+    renderGrid(results);
+    buildFilterLists(results);
+}
+
+function setupMainSearch() {
+    const input = document.getElementById("mainSearch");
+    if (!input) return;
+     input.addEventListener("input", () => {
+        const q = input.value.trim();
+        if (q.length === 0 || q.length >= 3) runSearch();
+    });
+}
+
 
 function ingredientListHTML(ingredient) {
     const ingredientItems = ingredient.map((ingredient) => {
@@ -125,6 +162,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     renderGrid(ALL_RECIPES);
     buildFilterLists(ALL_RECIPES);
+    setupMainSearch()
   } catch (err) {
     console.error(err);
   }
