@@ -5,15 +5,119 @@ console.log("[app] recipes importées :", Array.isArray(recipes), "longeur =", r
 
 let ALL_RECIPES = recipes;
 
-function normalize(str) {
-    return (str ?? "")
-        .toString()
-        .toLowerCase()
+function normalize(string) {
+    return (string ?? "")
+    .toString()
+    .toLowerCase()
 }
+
+
+function buildPredicate(criteria) {
+    const query = normalize(criteria.query || "");
+    const hasTextQuery = query.length >= 3;
+
+    const filters = criteria.filters || { ingredient: new Set(), appliance: new Set(), utensil: new Set() };
+
+    function matchTags(recipe) {
+
+        if (filters.ingredient.size) {
+            const ingredientSet = new Set(
+                (recipe.ingredients ?? []).map(i => normalize(i.ingredient ?? i.name ?? ""))
+            );
+            for ( const wanted of filters.ingredient) {
+                if (!ingredientSet.has(normalize(wanted))) return false;
+            }
+        }
+
+        if (filters.appliance.size) {
+            const appliance = normalize(recipe.appliance ?? "");
+            for (const wanted of filters.appliance) {
+                if (appliance !== normalize(wanted)) return false;
+            }
+        }
+
+        if (filters.utensil.size) {
+            const utensilSet = new Set(
+                (recipe.ustensils ?? []).map(i => normalize(i))
+            );
+            for ( const wanted of filters.utensil) {
+                if (!utensilSet.has(normalize(wanted))) return false;
+            }
+        }
+        return true;
+    }
+
+    return function predicate(recipe) {
+        if (hasTextQuery) {
+            const nameOnly = normalize(recipe.name ?? "");
+            if (!nameOnly.includes(query))
+            return false; }
+
+        return matchTags(recipe);
+    };
+}
+
+
+function searchArray(recipes, criteria) {
+    const pred = buildPredicate(criteria);
+    return recipes.filter(pred);
+}
+
+
+function collectCriteria() {
+    const query = document.getElementById("mainSearch")?.value ?? "";
+
+    const filters = { ingredient: new Set(), appliance: new Set(), utensil: new Set() };
+    document.querySelectorAll("#activeTags .badge").forEach(badge => {
+        const label = badge.dataset.label ?? "";
+        const cat   = badge.dataset.category;
+        if (cat && label) filters[cat].add(label);
+     });
+
+  return { query, filters };
+}
+
+function runSearch() {
+    const criteria = collectCriteria();
+
+    const hasAnyTag =
+        criteria.filters.ingredient.size ||
+        criteria.filters.appliance.size ||
+        criteria.filters.utensil.size;
+
+    const q = (criteria.query ?? "").trim();
+    const mustFilter = hasAnyTag || q.length >= 3;
+
+    const results = mustFilter
+        ? searchArray(ALL_RECIPES, criteria)
+        : ALL_RECIPES;
+
+    renderGrid(results);
+    buildFilterLists(results);
+}
+
+function setupMainSearch() {
+    const input = document.getElementById("mainSearch");
+    const button = document.getElementById("searchBtn");
+    
+    const triggerSearch = () => {
+        const query = input.value.trim();
+        if (query.length === 0 || query.length >= 3) {
+            return runSearch();
+        }
+    };
+
+    input.addEventListener("input", triggerSearch);
+
+    if (button) {
+        button.addEventListener("click", triggerSearch);
+    }
+}
+
 
 function formatQuantity(quantity, unit) {
     if (quantity == null && !unit) return '';
-    const unitLabel = unit ? `${unit}` : '';
+    const unitLabel = unit ? ` ${unit}` : '';
     return quantity != null ? `${quantity}${unitLabel}` : `${unitLabel}`.trim();
 }
 
@@ -21,37 +125,6 @@ function uniqueSorted(array) {
     return [...new Set(array)].sort((a, b) => 
     a.localeCompare(b, 'fr', {sensitivity : 'base' }));
 }
-
-function searchArray(recipes, query) {
-    const q = normalize(query);
-    const hasQuery = q.length >= 3;
-    if (!hasQuery) return recipes;
-
-    return recipes.filter(recipe => normalize(recipe.name ?? "").includes(q));
-}
-
-function runSearch() {
-    const query = document.getElementById("mainSearch")?.value?.trim() ?? "";
-    const hasQuery = query.length >= 3;
-
-    const start = performance.now();
-    const results = hasQuery ? searchArray(ALL_RECIPES, query) : ALL_RECIPES;
-    const end = performance.now();
-
-    console.log(`[algo-array] ${results.length} résultats en ${(end - start).toFixed(2)} ms`);
-    renderGrid(results);
-    buildFilterLists(results);
-}
-
-function setupMainSearch() {
-    const input = document.getElementById("mainSearch");
-    if (!input) return;
-     input.addEventListener("input", () => {
-        const q = input.value.trim();
-        if (q.length === 0 || q.length >= 3) runSearch();
-    });
-}
-
 
 function ingredientListHTML(ingredient) {
     const ingredientItems = ingredient.map((ingredient) => {
@@ -123,21 +196,30 @@ function renderGrid(recipesList) {
     if (!html) {
         gridElement.innerHTML = `
         <div class="col-12">
-            <div class="alert alert-info"> Aucune carte générée (template vide). </div>
+            <div class="alert alert-info"> Aucune recette trouver. </div>
         </div>`;
     }
 }
 
-function fillDropdown(id, values) {
+function fillDropdown(id, values, colorClass='warning', category) {
     const menu = document.getElementById(id);
     if (!menu) {
     console.warn(`[fillDropdown] #${id} introuvable`)
     return;
     }
-    menu.innerHTML = values.map( v => `<li><button class="dropdown-item" type="button"> ${v} </button></li>`).join('');
+    menu.innerHTML = values.map( v => `<li><button class="dropdown-item" type="button" data-value="${v}"> ${v} </button></li>`).join('');
+
+    menu.querySelectorAll('.dropdown-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+            addActiveTags(btn.dataset.value, colorClass, category);
+            btn.classList.add('selected');
+            runSearch();
+        });
+    });
 }
 
 function buildFilterLists(recipesList) {
+
     const ingredientsList = uniqueSorted(recipesList.flatMap((recipe) => 
     (recipe.ingredients ?? []).map((ing) => ing.ingredient ?? ing.name ?? '').filter(Boolean)));
 
@@ -145,11 +227,31 @@ function buildFilterLists(recipesList) {
 
     const ustensilsList = uniqueSorted(recipesList.flatMap((recipe) => (recipe.ustensils ?? [])).filter(Boolean));
 
-    fillDropdown('dd-ingredients', ingredientsList);
-    fillDropdown('dd-appliances', appliancesList);
-    fillDropdown('dd-ustensils', ustensilsList);
+    fillDropdown('dd-ingredients', ingredientsList, 'warning', 'ingredient');
+    fillDropdown('dd-appliances', appliancesList, 'warning', 'appliance');
+    fillDropdown('dd-ustensils', ustensilsList, 'warning', 'utensil');
 }
 
+function addActiveTags(label, color='warning', category) {
+    const wrap = document.getElementById("activeTags");
+    if ([...wrap.querySelectorAll(".badge")].some(b => b.dataset.label === label)) return;
+
+    const badge = document.createElement('span');
+    badge.className = `badge text-bg-${color} d-flex align-items-center gap-2 p-2`;
+    badge.dataset.label = label;
+    badge.dataset.category = category;
+    badge.innerHTML = `
+        ${label}
+        <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Supprimer"></button>
+        `;
+    wrap.appendChild(badge);
+    runSearch();
+
+    badge.querySelector('button').addEventListener('click', () => {
+        badge.remove();
+        runSearch();
+    });
+}
 
 window.addEventListener('DOMContentLoaded', () => {
   try {
@@ -162,7 +264,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     renderGrid(ALL_RECIPES);
     buildFilterLists(ALL_RECIPES);
-    setupMainSearch()
+    setupMainSearch();
   } catch (err) {
     console.error(err);
   }
