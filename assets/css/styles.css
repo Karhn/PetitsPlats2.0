@@ -99,3 +99,127 @@
     margin-right: 33px;
     border-radius: 11px;
 }
+
+.logo-img {
+    width: 207px;
+    margin-left: 69px;
+    margin-top: 51px;
+}
+
+.hero-title {
+    color: #FFD15B;
+    font-size: 44px;
+    font-weight: 400;
+}
+
+.search-bar {
+    display: flex;
+    border-radius: 11px;
+    overflow: hidden;
+    background-color: #ffffff;
+    width: 952px;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.search-input {
+    flex: 1;
+    border: none;
+    box-shadow: none;
+    outline: none;
+    padding: 20px 30px;
+}
+
+.search-input:focus {
+    color: #7A7A7A;
+    font-weight: 400;
+    outline: none;
+    box-shadow: none;
+}
+
+.search-btn {
+    background-color: #1B1B1B;
+    border: none;
+    border-radius: 10px;
+    width: 51px;
+    height: 52px;
+    margin-top: 6px;
+    margin-right: 6px;
+}
+
+.search-btn:hover {
+    background-color: #FFD15B;
+}
+
+.search-btn .fa-magnifying-glass {
+    font-size: 1.6rem;
+}
+
+.dropdown-menu .search-bar {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 2px 6px;
+}
+
+.dropdown-menu .form-control {
+    flex: 1;
+    border: 1px solid #C6C6C6;
+    border-radius: 2px 0 0 2px;
+    color: #7A7A7A;
+    font-weight: 400;
+    box-shadow: none;
+    border-right: none;
+}
+
+.dropdown-menu .btn-find {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 1px solid #C6C6C6;
+    border-left: none;
+    border-radius: 0 2px 2px 0;
+    padding: 0 0.6rem;
+    height: 100%;
+    margin: 0;
+}
+
+.dropdown-menu .btn-find .fa-magnifying-glass {
+    color: #7A7A7A;
+}
+
+.dropdown-menu .search-input,
+.dropdown-menu .btn-find {
+    height: 31px;
+}
+
+.dropdown-item.selected {
+    background-color: #FFD15B;
+    display: flex;
+    align-items: center;
+    justify-content:space-between;
+}
+
+.dropdown-item.selected:hover {
+    font-weight: 700;
+}
+
+.dropdown-item .remove-selected {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0.5rem;
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    background: #000;
+    color: #FFD15B;
+    font-size: 1rem;
+    cursor: pointer;
+    opacity: 0;
+}
+
+.dropdown-item.selected:hover .remove-selected {
+    opacity: 1;
+}

@@ -13,24 +13,24 @@
 <body class="bg-light">
 
     <header class="position-relative">
-        <img src="assets/css/images/ImageHeader.jpg" alt="" class="w-100 object-fit-cover hero-img">
-        <div class="position-absolute top-50 start-50 translate-middle text-center text-white px-3">
-            <h1 class="display-5 fw-bold text-shadow"> CHERCHERZ PARMI PLUS DE 1500 RECETTES </h1>
-            <p class="lead text-shadow"> Du quotidien, simples et délicieuses </p>
-
-            <div class="container">
+        <img src="assets/css/images/ImageHeader.jpg" class="w-100 object-fit-fill hero-img">
+        <div class="position-absolute top-0 start-0">
+            <img src="assets/css/images/Logo.png" alt="Les Petits Plats" class="logo-img" >
+        </div>
+        <div class="position-absolute top-50 start-50 translate-middle text-center px-3">
+            <h1 class="display-5 fw-bold hero-title"> CHERCHEZ PARMI PLUS DE 1500 RECETTES <br> DU QUOTIDIEN,SIMPLES ET DÉLICIEUSES </h1>
+            <div class="container mt-5">
                 <div class="row justify-content-center">
-                    <div class="col-lg-8">
-                        <div class="input-group input-group-lg shadow">
-                            <input id="mainSearch" type="search" class="form-control" placeholder="Rechercher une recette, un ingrédient...">
-                            <button id="searchBtn" class="btn btn-dark" type="button" aria-label="Rechercher">
+                    <div class="col-lg-0">
+                        <div class="search-bar">
+                            <input id="mainSearch" type="search" class="form-control search-input" placeholder="Rechercher une recette, un ingrédient...">
+                            <button id="searchBtn" class="btn btn-dark search-btn" type="button" aria-label="Rechercher">
                                 <span class="fa-solid fa-magnifying-glass"></span>
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
-
         </div>
     </header>
 
@@ -43,8 +43,14 @@
                 </button>
                 <ul id="dd-ingredients" class="dropdown-menu p-2" style="min-width: 20rem;">
                     <li class="px-2 text-muted small">
-
+                        <div class="search-bar">
+                            <input id="tagSearchIngredients" type="search" class="form-control form-control-sm">
+                            <button id="btnTagIngredients" type="button" class="btn-find">
+                                <span class="fa-solid fa-magnifying-glass"></span>
+                            </button>
+                        </div>
                     </li>
+                    <li class="dropdown-selected-zone"></li>
                 </ul>
             </div>
 
@@ -54,8 +60,14 @@
                 </button>
                 <ul id="dd-appliances" class="dropdown-menu p-2" style="min-width: 20rem;">
                     <li class="px-2 text-muted small">
-
+                        <div class="search-bar">
+                            <input id="tagSearchAppliances" type="search" class="form-control form-control-sm">
+                            <button id="btnTagAppliances" type="button" class="btn-find">
+                                <span class="fa-solid fa-magnifying-glass"></span>
+                            </button>
+                        </div>
                     </li>
+                    <li class="dropdown-selected-zone"></li>
                 </ul>
             </div>
 
@@ -65,8 +77,14 @@
                 </button>
                 <ul id="dd-ustensils" class="dropdown-menu p-2" style="min-width: 20rem;">
                     <li class="px-2 text-muted small">
-
+                        <div class="search-bar">
+                            <input id="tagSearchUstensils" type="search" class="form-control form-control-sm">
+                            <button id="btnTagUstensils" type="button" class="btn-find">
+                                <span class="fa-solid fa-magnifying-glass"></span>
+                            </button>
+                        </div>
                     </li>
+                    <li class="dropdown-selected-zone"></li>
                 </ul>
             </div>
 

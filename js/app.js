@@ -9,8 +9,33 @@ function normalize(string) {
     return (string ?? "")
     .toString()
     .toLowerCase()
+    .trim()
 }
 
+function formatQuantity(quantity, unit) {
+    if (quantity == null && !unit) return '';
+    const unitLabel = unit ? ` ${unit}` : '';
+    return quantity != null ? `${quantity}${unitLabel}` : `${unitLabel}`.trim();
+}
+
+function escapeHTML(string) {
+    const p = document.createElement("p");
+    p.textContent = string;
+    return p.innerHTML
+}
+
+function uniqueSorted(array) {
+    return [...new Set(array)].sort((a, b) => 
+    a.localeCompare(b, 'fr', {sensitivity : 'base' }));
+}
+
+function buildRecipeInput(recipe) {
+    return normalize([
+        recipe.name,
+        recipe.description,
+        ...(recipe.ingredients ?? []).map(i => i.ingredient || "")
+    ].join(""));
+}
 
 function buildPredicate(criteria) {
     const query = normalize(criteria.query || "");
@@ -22,7 +47,7 @@ function buildPredicate(criteria) {
 
         if (filters.ingredient.size) {
             const ingredientSet = new Set(
-                (recipe.ingredients ?? []).map(i => normalize(i.ingredient ?? i.name ?? ""))
+                (recipe.ingredients ?? []).map(i => normalize(i.ingredient || ""))
             );
             for ( const wanted of filters.ingredient) {
                 if (!ingredientSet.has(normalize(wanted))) return false;
@@ -30,7 +55,7 @@ function buildPredicate(criteria) {
         }
 
         if (filters.appliance.size) {
-            const appliance = normalize(recipe.appliance ?? "");
+            const appliance = normalize(recipe.appliance || "");
             for (const wanted of filters.appliance) {
                 if (appliance !== normalize(wanted)) return false;
             }
@@ -38,7 +63,7 @@ function buildPredicate(criteria) {
 
         if (filters.utensil.size) {
             const utensilSet = new Set(
-                (recipe.ustensils ?? []).map(i => normalize(i))
+                (recipe.ustensils ?? []).map(i => normalize(i || ""))
             );
             for ( const wanted of filters.utensil) {
                 if (!utensilSet.has(normalize(wanted))) return false;
@@ -49,86 +74,22 @@ function buildPredicate(criteria) {
 
     return function predicate(recipe) {
         if (hasTextQuery) {
-            const nameOnly = normalize(recipe.name ?? "");
-            if (!nameOnly.includes(query))
-            return false; }
+            const inputSearch = buildRecipeInput(recipe);
+            if (!inputSearch.includes(query)) return false; 
+        }
 
         return matchTags(recipe);
     };
 }
-
 
 function searchArray(recipes, criteria) {
     const pred = buildPredicate(criteria);
     return recipes.filter(pred);
 }
 
-
-function collectCriteria() {
-    const query = document.getElementById("mainSearch")?.value ?? "";
-
-    const filters = { ingredient: new Set(), appliance: new Set(), utensil: new Set() };
-    document.querySelectorAll("#activeTags .badge").forEach(badge => {
-        const label = badge.dataset.label ?? "";
-        const cat   = badge.dataset.category;
-        if (cat && label) filters[cat].add(label);
-     });
-
-  return { query, filters };
-}
-
-function runSearch() {
-    const criteria = collectCriteria();
-
-    const hasAnyTag =
-        criteria.filters.ingredient.size ||
-        criteria.filters.appliance.size ||
-        criteria.filters.utensil.size;
-
-    const q = (criteria.query ?? "").trim();
-    const mustFilter = hasAnyTag || q.length >= 3;
-
-    const results = mustFilter
-        ? searchArray(ALL_RECIPES, criteria)
-        : ALL_RECIPES;
-
-    renderGrid(results);
-    buildFilterLists(results);
-}
-
-function setupMainSearch() {
-    const input = document.getElementById("mainSearch");
-    const button = document.getElementById("searchBtn");
-    
-    const triggerSearch = () => {
-        const query = input.value.trim();
-        if (query.length === 0 || query.length >= 3) {
-            return runSearch();
-        }
-    };
-
-    input.addEventListener("input", triggerSearch);
-
-    if (button) {
-        button.addEventListener("click", triggerSearch);
-    }
-}
-
-
-function formatQuantity(quantity, unit) {
-    if (quantity == null && !unit) return '';
-    const unitLabel = unit ? ` ${unit}` : '';
-    return quantity != null ? `${quantity}${unitLabel}` : `${unitLabel}`.trim();
-}
-
-function uniqueSorted(array) {
-    return [...new Set(array)].sort((a, b) => 
-    a.localeCompare(b, 'fr', {sensitivity : 'base' }));
-}
-
 function ingredientListHTML(ingredient) {
     const ingredientItems = ingredient.map((ingredient) => {
-        const ingredientName = ingredient.ingredient ?? ingredient.name ?? '';
+        const ingredientName = ingredient.ingredient || '';
         const quantityLabel = formatQuantity(ingredient.quantity, ingredient.unit);
         
         return `
@@ -176,7 +137,7 @@ function recipeCardTemplate(recipe) {
     `;
 }
 
-function renderGrid(recipesList) {
+function renderGrid(recipesList, query = "") {
     const gridElement = document.getElementById("cardsGrid");
     if (!gridElement) {
         console.error("[renderGrid] #cardsGrid introuvable dans le DOM")
@@ -194,42 +155,70 @@ function renderGrid(recipesList) {
     console.log("[renderGrid] grid innerHTML length =", gridElement.innerHTML.length);
 
     if (!html) {
+        const safeQuery = escapeHTML(query);
         gridElement.innerHTML = `
         <div class="col-12">
-            <div class="alert alert-info"> Aucune recette trouver. </div>
+            <div class="alert alert-info"> Aucune recette ne contient "${safeQuery}". </div>
         </div>`;
     }
 }
 
-function fillDropdown(id, values, colorClass='warning', category) {
+function fillDropdown(id, values, colorClass='warning', category, selectedSet = new Set()) {
     const menu = document.getElementById(id);
     if (!menu) {
     console.warn(`[fillDropdown] #${id} introuvable`)
     return;
     }
-    menu.innerHTML = values.map( v => `<li><button class="dropdown-item" type="button" data-value="${v}"> ${v} </button></li>`).join('');
 
-    menu.querySelectorAll('.dropdown-item').forEach(btn => {
-        btn.addEventListener('click', () => {
-            addActiveTags(btn.dataset.value, colorClass, category);
-            btn.classList.add('selected');
-            runSearch();
-        });
+    const selectedZone = menu.querySelector(".dropdown-selected-zone");
+    if (!selectedZone) {
+        console.warn(`[fillDropdown] .dropdown-selected-zone manquante dans #${id}`);
+    return;
+  }
+
+    [...menu.querySelectorAll("li")].forEach((li, i) => {
+        const isSearch = li.querySelector(".search-bar");
+        const isSelectedZone = li.classList.contains("dropdown-selected-zone");
+        if (!isSearch && !isSelectedZone) {
+            li.remove();
+        }
     });
+
+    const frag = document.createDocumentFragment();
+    
+    values.forEach(v => {
+        const li = document.createElement("li");
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.classList = "dropdown-item";
+        btn.textContent = v;
+        btn.dataset.value = v;
+        btn.dataset.category = category;
+
+        btn.addEventListener("click", () => {
+                addActiveTags(btn.dataset.value, colorClass, btn.dataset.category);
+                runSearch();
+            });
+        li.appendChild(btn);
+        frag.appendChild(li);
+    });
+    menu.appendChild(frag);
+
+    reoderAndHighlightSelected(menu, selectedSet, category)
 }
 
-function buildFilterLists(recipesList) {
+function buildFilterLists(recipesList, filters = { ingredient: new Set(), appliance: new Set(), utensil: new Set() }) {
 
     const ingredientsList = uniqueSorted(recipesList.flatMap((recipe) => 
-    (recipe.ingredients ?? []).map((ing) => ing.ingredient ?? ing.name ?? '').filter(Boolean)));
+    (recipe.ingredients ?? []).map((ing) => ing.ingredient || '').filter(Boolean)));
 
-    const appliancesList = uniqueSorted(recipesList.map((recipe) => recipe.appliance ?? '').filter(Boolean));
+    const appliancesList = uniqueSorted(recipesList.map((recipe) => recipe.appliance || '').filter(Boolean));
 
     const ustensilsList = uniqueSorted(recipesList.flatMap((recipe) => (recipe.ustensils ?? [])).filter(Boolean));
 
-    fillDropdown('dd-ingredients', ingredientsList, 'warning', 'ingredient');
-    fillDropdown('dd-appliances', appliancesList, 'warning', 'appliance');
-    fillDropdown('dd-ustensils', ustensilsList, 'warning', 'utensil');
+    fillDropdown('dd-ingredients', ingredientsList, 'warning', 'ingredient', filters.ingredient);
+    fillDropdown('dd-appliances', appliancesList, 'warning', 'appliance', filters.appliance);
+    fillDropdown('dd-ustensils', ustensilsList, 'warning', 'utensil', filters.utensil);
 }
 
 function addActiveTags(label, color='warning', category) {
@@ -242,30 +231,150 @@ function addActiveTags(label, color='warning', category) {
     badge.dataset.category = category;
     badge.innerHTML = `
         ${label}
-        <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Supprimer"></button>
+        <button type="button" class="btn-close btn-close-black btn-sm ms-1" aria-label="Supprimer"></button>
         `;
     wrap.appendChild(badge);
-    runSearch();
 
     badge.querySelector('button').addEventListener('click', () => {
         badge.remove();
         runSearch();
     });
+
+    runSearch();
+}
+
+function collectCriteria() {
+    const query = document.getElementById("mainSearch")?.value ?? "";
+
+    const filters = { ingredient: new Set(), appliance: new Set(), utensil: new Set() };
+    document.querySelectorAll("#activeTags .badge").forEach(badge => {
+        const label = badge.dataset.label ?? "";
+        const cat = badge.dataset.category;
+        if (cat && label) filters[cat].add(label);
+    });
+
+  return { query, filters };
+}
+
+function runSearch() {
+    const criteria = collectCriteria();
+
+    const hasAnyTag =
+        criteria.filters.ingredient.size ||
+        criteria.filters.appliance.size ||
+        criteria.filters.utensil.size;
+
+    const q = (criteria.query ?? "").trim();
+    const mustFilter = hasAnyTag || q.length >= 3;
+
+    const results = mustFilter
+        ? searchArray(ALL_RECIPES, criteria)
+        : ALL_RECIPES;
+
+    renderGrid(results, q);
+    buildFilterLists(results, criteria.filters);
+}
+
+function setupMainSearch() {
+    const input = document.getElementById("mainSearch");
+    const button = document.getElementById("searchBtn");
+    
+    const triggerSearch = () => {
+        const query = input.value.trim();
+        if (query.length === 0 || query.length >= 3) {
+            return runSearch();
+        }
+    };
+
+    input.addEventListener("input", triggerSearch);
+
+    if (button) {
+        button.addEventListener("click", triggerSearch);
+    }
+}
+
+function setupTagSearchInput(inputId, menuId, buttonId) {
+    const input = document.getElementById(inputId);
+    const menu = document.getElementById(menuId);
+    const button = document.getElementById(buttonId);
+
+    const runFilter = () => {
+        const q = normalize(input.value.trim());
+        menu.querySelectorAll("li > button.dropdown-item").forEach(btn => {
+            const label = normalize(btn.dataset.value || btn.textContent || "");
+            btn.parentElement.style.display = (!q || label.includes(q)) ? "" : "none";
+        })
+    }
+
+    input.addEventListener("input", runFilter);
+
+    if (button) {
+        button.addEventListener("click", () => {
+            runFilter();
+            runSearch();
+        });
+    }
+
+    const dropdownButton = menu.parentElement?.querySelector("[data-bs-toggle='dropdown']");
+    if (dropdownButton) {
+        dropdownButton.addEventListener("show.bs.dropdown", () => {
+            input.value = "";
+            menu.querySelectorAll("li").forEach(li => li.style.removeProperty("display"));
+        });
+    }
+}
+
+function removeActiveTag(label, category) {
+    const wrap = document.getElementById("activeTags");
+    if (!wrap) return;
+
+    const badge = [...wrap.querySelectorAll(".badge")].find(b => b.dataset.label === label && (!category || b.dataset.category === category));
+    if (badge) {
+        badge.remove();
+    }
+}
+
+function reoderAndHighlightSelected(menu, selectedSet = new Set(), category) {
+    const selectedZone = menu.querySelector('.dropdown-selected-zone');
+    const buttons = menu.querySelectorAll("li > button.dropdown-item");
+
+    buttons.forEach(btn => {
+        const li = btn.closest("li");
+        const value = btn.dataset.value || btn.textContent.trim();
+        const isSelected = selectedSet.has(value);
+
+        btn.classList.toggle("selected", isSelected);
+
+        let removeBtn = btn.querySelector(".remove-selected");
+
+        if (isSelected) {
+            if (!removeBtn) {
+            removeBtn = document.createElement("span");
+            removeBtn.className = "remove-selected";
+            removeBtn.innerHTML = "&times;";
+
+            removeBtn.addEventListener("click", (event) => {
+                event.stopPropagation();
+                removeActiveTag(value, category);
+                runSearch();
+            });
+            btn.appendChild(removeBtn);
+
+        } 
+                selectedZone.insertAdjacentElement("afterend", li);
+        } else {
+            if (removeBtn) removeBtn.remove();
+            menu.appendChild(li);
+        }
+    });
+
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  try {
-    const grid = document.getElementById("cardsGrid");
-    if (grid) {
-      grid.innerHTML = '<div class="col-12"><div class="card p-4">TEST CARTE</div></div>';
-    }
-
-    console.log("[app] ALL_RECIPES longueur =", ALL_RECIPES.length, "exemple =", ALL_RECIPES[0]);
-
     renderGrid(ALL_RECIPES);
     buildFilterLists(ALL_RECIPES);
     setupMainSearch();
-  } catch (err) {
-    console.error(err);
-  }
+    setupTagSearchInput("tagSearchIngredients", "dd-ingredients", "btnTagIngredients");
+    setupTagSearchInput("tagSearchAppliances",  "dd-appliances",  "btnTagAppliances");
+    setupTagSearchInput("tagSearchUstensils",   "dd-ustensils",   "btnTagUstensils");
 });
