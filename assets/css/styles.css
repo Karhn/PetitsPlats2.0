@@ -42,12 +42,9 @@
 }
 
 .card-recipe .card-text {
-    display: -webkit-box;
-    -webkit-line-clamp: 4;
-    line-clamp: 4;
-    -webkit-box-orient: vertical;
+    line-height: 1.4;
+    max-height: calc(1.4em * 4);
     overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .card-recipe .row > .col-6 {
