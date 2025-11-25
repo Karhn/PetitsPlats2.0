@@ -1,8 +1,5 @@
 import { recipes } from "../data/recipes.js";
 
-console.log("[app] module chargé");
-console.log("[app] recipes importées :", Array.isArray(recipes), "longeur =", recipes?.length);
-
 let ALL_RECIPES = recipes;
 
 function normalize(string) {
@@ -113,7 +110,7 @@ function ingredientListHTML(ingredient) {
 }
 
 function recipeCardTemplate(recipe) {
-    const preparationTime = recipe.time ?? recipe.prepTime ?? null;
+    const preparationTime = recipe.time ?? null;
     const imageSource = recipe.image ? `assets/css/images/${recipe.image}` : `assets/images/placeholder.jpg`;
 
     return `
@@ -139,20 +136,12 @@ function recipeCardTemplate(recipe) {
 
 function renderGrid(recipesList, query = "") {
     const gridElement = document.getElementById("cardsGrid");
-    if (!gridElement) {
-        console.error("[renderGrid] #cardsGrid introuvable dans le DOM")
-        return;
-    }
 
     const results = recipesList.map(recipeCardTemplate).join("");
     gridElement.innerHTML = results;
     
     const counter = document.getElementById("recipesCount");
     if (counter) counter.textContent = recipesList.length;
-    else console.warn("[renderGrid] #recipesCount introuvable");
-
-    console.log("[renderGrid] recettes rendues =", recipesList.length);
-    console.log("[renderGrid] grid innerHTML length =", gridElement.innerHTML.length);
 
     if (!results) {
         const safeQuery = escapeHTML(query);
@@ -165,16 +154,6 @@ function renderGrid(recipesList, query = "") {
 
 function fillDropdown(id, values, colorClass='warning', category, selectedSet = new Set()) {
     const menu = document.getElementById(id);
-    if (!menu) {
-    console.warn(`[fillDropdown] #${id} introuvable`)
-    return;
-    }
-
-    const selectedZone = menu.querySelector(".dropdown-selected-zone");
-    if (!selectedZone) {
-        console.warn(`[fillDropdown] .dropdown-selected-zone manquante dans #${id}`);
-    return;
-  }
 
     [...menu.querySelectorAll("li")].forEach((li, i) => {
         const isSearch = li.querySelector(".search-bar");
