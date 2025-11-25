@@ -151,6 +151,7 @@
 
 .search-btn:hover {
     background-color: #FFD15B;
+    color: #000;
 }
 
 .search-btn .fa-magnifying-glass {
