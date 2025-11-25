@@ -155,7 +155,7 @@ function renderGrid(recipesList, query = "") {
 function fillDropdown(id, values, colorClass='warning', category, selectedSet = new Set()) {
     const menu = document.getElementById(id);
 
-    [...menu.querySelectorAll("li")].forEach((li, i) => {
+    [...menu.querySelectorAll("li")].forEach((li) => {
         const isSearch = li.querySelector(".search-bar");
         const isSelectedZone = li.classList.contains("dropdown-selected-zone");
         if (!isSearch && !isSelectedZone) {
