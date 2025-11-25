@@ -144,8 +144,8 @@ function renderGrid(recipesList, query = "") {
         return;
     }
 
-    const html = recipesList.map(recipeCardTemplate).join("");
-    gridElement.innerHTML = html;
+    const results = recipesList.map(recipeCardTemplate).join("");
+    gridElement.innerHTML = results;
     
     const counter = document.getElementById("recipesCount");
     if (counter) counter.textContent = recipesList.length;
@@ -154,7 +154,7 @@ function renderGrid(recipesList, query = "") {
     console.log("[renderGrid] recettes rendues =", recipesList.length);
     console.log("[renderGrid] grid innerHTML length =", gridElement.innerHTML.length);
 
-    if (!html) {
+    if (!results) {
         const safeQuery = escapeHTML(query);
         gridElement.innerHTML = `
         <div class="col-12">
