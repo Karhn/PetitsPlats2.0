@@ -92,9 +92,14 @@
     background-color: white;
     height: 56px;
     width: 176px;
-    margin-left: 33px;
+    margin-left: 23px;
     margin-right: 33px;
     border-radius: 11px;
+}
+
+#activeTags {
+    margin-left: 23px;
+    margin-top: 16px;
 }
 
 .logo-img {
@@ -203,16 +208,17 @@
 }
 
 .dropdown-item .remove-selected {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
     margin-left: 0.5rem;
     width: 20px;
     height: 20px;
+    line-height: 1;
     border-radius: 999px;
     background: #000;
     color: #FFD15B;
-    font-size: 1rem;
+    font-size: 12px;
     cursor: pointer;
     opacity: 0;
 }
